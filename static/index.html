@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Threads</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path d='M6 26C10 16 14 22 16 14s8-4 10-8' stroke='%23818cf8' stroke-width='3' fill='none' stroke-linecap='round'/></svg>">
+  <link rel="stylesheet" href="/static/vendor/katex/katex.min.css">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#/">threads<span>/</span></a>
+    <nav>
+      <a href="#/" data-nav="home">Threads</a>
+      <a href="#/atlas" data-nav="atlas">Atlas</a>
+      <a href="#/resurface" data-nav="resurface">Resurface</a>
+    </nav>
+    <div class="topbar-actions">
+      <button class="ghost" id="btn-ingest" title="Add a concept from Wikipedia, arXiv, a URL or pasted text">+ Source</button>
+      <button id="btn-new-thread">+ Thread</button>
+      <button class="ghost icon" id="btn-theme" title="Toggle light/dark" aria-label="Toggle theme">◐</button>
+    </div>
+  </header>
+
+  <main id="view" tabindex="-1"></main>
+
+  <button id="pin-fab" class="fab" title="Drop a pin (Ctrl+K)" aria-label="Drop a pin" hidden>📌</button>
+  <div id="modal-root"></div>
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <script src="/static/vendor/marked.min.js"></script>
+  <script src="/static/vendor/purify.min.js"></script>
+  <script src="/static/vendor/katex/katex.min.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>
