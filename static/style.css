@@ -235,3 +235,27 @@ details.resolved summary { cursor: pointer; color: var(--text-dim); font-size: 1
   .content.l0 { font-size: 17.5px; }
   .modal { padding: 18px; }
 }
+
+/* ---------- guide page ---------- */
+.btn-link { align-self: center; font-size: 14px; font-weight: 550; padding: 6px 12px; border-radius: 7px; background: var(--accent); color: var(--accent-ink); }
+.btn-link:hover { text-decoration: none; filter: brightness(1.08); }
+.guide-layout { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 40px; align-items: start; }
+.toc { position: sticky; top: 76px; display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
+.toc-h { font: 600 11px "JetBrains Mono", ui-monospace, monospace; text-transform: uppercase; letter-spacing: .08em; color: var(--text-faint); margin-bottom: 6px; }
+.toc a { color: var(--text-dim); padding: 3px 0; line-height: 1.35; }
+.toc a:hover { color: var(--text); text-decoration: none; }
+.content.guide { max-width: 720px; margin-top: 0; font-size: 16px; }
+.content.guide h1 { font-size: 32px; letter-spacing: -0.015em; margin: 0 0 .4em; }
+.content.guide h2 { font-size: 22px; margin-top: 1.4em; scroll-margin-top: 70px; }
+.content.guide h3 { font-size: 17px; margin-top: 1.6em; }
+.content.guide hr { border: 0; border-top: 1px solid var(--line); margin: 2.2em 0; }
+.content.guide table { width: 100%; font-size: 14.5px; margin: 0 0 1.2em; }
+.content.guide th { text-align: left; background: var(--bg-raised); }
+.content.guide td, .content.guide th { padding: 7px 10px; vertical-align: top; }
+.content.guide blockquote { border-left-color: var(--accent); color: var(--text); }
+.content.guide pre { font-size: 12.5px; }
+@media (max-width: 800px) {
+  .guide-layout { grid-template-columns: minmax(0, 1fr); }
+  .toc { display: none; }
+  .content.guide table { display: block; overflow-x: auto; }
+}

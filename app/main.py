@@ -59,7 +59,8 @@ def _token() -> str:
 async def _auth(request: Request, call_next):
     if settings.app_password:
         path = request.url.path
-        open_paths = path in ("/login", "/healthz") or path.startswith("/static/")
+        # The guide stays readable behind the password, so a shared link explains itself.
+        open_paths = path in ("/login", "/healthz", "/guide") or path.startswith("/static/")
         if not open_paths and not hmac.compare_digest(request.cookies.get(COOKIE, ""), _token()):
             if path.startswith("/api/"):
                 return JSONResponse({"detail": "Not authenticated"}, status_code=401)
@@ -72,7 +73,8 @@ LOGIN_PAGE = """<!doctype html><html><head><meta charset="utf-8"><meta name="vie
 <body class="login"><form method="post" action="/login" class="login-card">
 <div class="brand">threads<span>/</span></div>
 <input type="password" name="password" placeholder="Password" autofocus>
-<button type="submit">Enter</button>{error}</form></body></html>"""
+<button type="submit">Enter</button>{error}
+<a href="/guide" style="text-align:center;font-size:13px">What is this? Read the guide →</a></form></body></html>"""
 
 
 @app.get("/login", response_class=HTMLResponse)
@@ -498,6 +500,11 @@ def export(conn: sqlite3.Connection = DB):
 
 
 # ------------------------------------------------------------------- SPA
+
+@app.get("/guide", include_in_schema=False)
+def guide():
+    return FileResponse(STATIC / "guide.html")
+
 
 @app.get("/", include_in_schema=False)
 def index():

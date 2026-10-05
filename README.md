@@ -22,6 +22,8 @@ Microlearning for associative minds. Instead of a queue of summaries and a strea
 
 Seeded with a cross-linked slice of ML maths: backprop, gradient descent and conditioning, softmax, entropy, cross-entropy/KL, the Boltzmann distribution, attention and SVD.
 
+**New here?** Read the [field guide](static/guide.md) (also served in the app at `/guide`, readable even behind the password).
+
 See [`docs/DESIGN.md`](docs/DESIGN.md) for the rationale, and for where this build departs from the original spec and why.
 
 ## Run locally

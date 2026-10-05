@@ -202,3 +202,14 @@ def test_sweep_skips_thread_that_changed_underneath():
     import pytest
     with pytest.raises(TransitionError):
         fire(conn, "t", "IDLE_TIMEOUT")
+
+
+def test_guide_is_public_even_with_password(client, monkeypatch):
+    from app.config import settings
+    monkeypatch.setattr(settings, "app_password", "pw")
+    assert client.get("/api/units").status_code == 401
+    r = client.get("/guide")
+    assert r.status_code == 200 and "guide.md" in r.text
+    md = client.get("/static/guide.md")
+    assert md.status_code == 200 and "five-minute tour" in md.text.lower()
+    assert "/guide" in client.get("/login").text

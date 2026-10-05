@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Guide · threads/</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path d='M6 26C10 16 14 22 16 14s8-4 10-8' stroke='%23818cf8' stroke-width='3' fill='none' stroke-linecap='round'/></svg>">
+  <link rel="stylesheet" href="/static/vendor/katex/katex.min.css">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="guide-page">
+  <header class="topbar">
+    <a class="brand" href="/">threads<span>/</span></a>
+    <nav><a class="active" href="/guide">Guide</a></nav>
+    <div class="topbar-actions">
+      <a class="btn-link" href="/">Open the app →</a>
+      <button class="ghost icon" id="btn-theme" title="Toggle light/dark" aria-label="Toggle theme">◐</button>
+    </div>
+  </header>
+  <main>
+    <div class="guide-layout">
+      <nav class="toc" id="toc" aria-label="Contents"></nav>
+      <article class="content guide" id="guide"><p class="rel-none">Loading the guide…</p></article>
+    </div>
+  </main>
+  <script src="/static/vendor/marked.min.js"></script>
+  <script src="/static/vendor/purify.min.js"></script>
+  <script src="/static/vendor/katex/katex.min.js"></script>
+  <script src="/static/md.js"></script>
+  <script>
+    (async () => {
+      const root = document.documentElement;
+      try { const t = localStorage.getItem("theme"); if (t) root.dataset.theme = t; } catch (_) {}
+      document.getElementById("btn-theme").onclick = () => {
+        root.dataset.theme = root.dataset.theme === "dark" ? "light" : "dark";
+        try { localStorage.setItem("theme", root.dataset.theme); } catch (_) {}
+      };
+      const art = document.getElementById("guide"), toc = document.getElementById("toc");
+      try {
+        const res = await fetch("/static/guide.md");
+        art.innerHTML = renderMd(await res.text());
+      } catch (e) {
+        art.innerHTML = `<p class="err">Couldn't load the guide: ${esc(e.message)}</p>`;
+        return;
+      }
+      const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      toc.innerHTML = `<div class="toc-h">Contents</div>`;
+      art.querySelectorAll("h2").forEach((h) => {
+        h.id = slug(h.textContent);
+        const a = document.createElement("a");
+        a.href = "#" + h.id; a.textContent = h.textContent;
+        toc.appendChild(a);
+      });
+      if (location.hash) document.getElementById(location.hash.slice(1))?.scrollIntoView();
+    })();
+  </script>
+</body>
+</html>
