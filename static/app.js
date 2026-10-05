@@ -746,7 +746,7 @@ function ingestModal() {
         body: { kind, ref, domain: $("#domain", m).value.trim(), thread_id: inThread ? app.thread.id : null },
       });
       closeModal();
-      toast(`Added “${unit.title}”.`);
+      toast(unit.notice ? `Added “${unit.title}”. ${unit.notice}` : `Added “${unit.title}”.`);
       if (inThread) await loadUnit(unit.id, 0, "core");
       else unitPreview(unit);
     } catch (err) {

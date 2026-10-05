@@ -53,6 +53,7 @@ Live Space: https://huggingface.co/spaces/SoulFireMage/threads (private).
 | `OPENROUTER_API_KEY` | alternative LLM backend | Takes precedence over `HF_TOKEN` when set. A budget-capped, expiring key is ideal |
 | `OPENROUTER_MODEL` | no | Default `qwen/qwen3.8-27b` |
 | `LLM_BACKEND` | no | `auto` (default), `hf` or `openrouter` |
+| `LLM_REASONING` | no | Reasoning effort for deep-dive synthesis: `off`, `low` (default), `medium`, `high`. JSON tasks (primers, ingest, recall questions) always run with reasoning off |
 | `WIKIMEDIA_TOKEN` | no | Personal API token from api.wikimedia.org. Wikipedia throttles shared cloud IPs; authenticated requests get per-account limits |
 | `DEFAULT_MODEL` | no | Default `Qwen/Qwen3.8-27B`; any chat model served by HF Inference Providers |
 | `INFERENCE_PROVIDER` | no | Default `auto` |

@@ -49,6 +49,10 @@ class Settings:
     openrouter_model: str = field(
         default_factory=lambda: os.environ.get("OPENROUTER_MODEL", "qwen/qwen3.8-27b")
     )
+    # Reasoning effort for long-form synthesis: off | low | medium | high.
+    llm_reasoning: str = field(
+        default_factory=lambda: os.environ.get("LLM_REASONING", "low").lower()
+    )
     llm_backend_pref: str = field(
         default_factory=lambda: os.environ.get("LLM_BACKEND", "auto").lower()
     )

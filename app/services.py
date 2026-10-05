@@ -2,14 +2,18 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 import json
 import re
 import sqlite3
 from datetime import timedelta
 
 from . import llm, sources
+from .config import settings
 from .db import clock, new_id, parse_ts, row, rows
 from .state import get_thread, touch
+
+log = logging.getLogger("uvicorn.error")
 
 REL_TYPES = ("REQUIRES", "EXTENDS", "ANALOGOUS_TO", "CONTRASTS_WITH")
 LENSES = ("core", "pattern", "steps")
@@ -387,7 +391,9 @@ def get_primer(conn: sqlite3.Connection, thread_id: str, force: bool = False) ->
     origin = "synthesised"
     try:
         payload = llm_primer(conn, thread_id)
-    except Exception:  # noqa: BLE001 - any provider/parse failure falls back
+    except Exception as e:  # noqa: BLE001 - any provider/parse failure falls back
+        if settings.llm_enabled:
+            log.warning("LLM primer failed, using fallback: %s: %s", type(e).__name__, e)
         payload, origin = fallback_primer(conn, thread_id), "fallback"
     pid = new_id()
     conn.execute(
@@ -445,7 +451,7 @@ def ingest(conn: sqlite3.Connection, kind: str, ref: str, domain: str = "", titl
     doc = sources.fetch(kind, ref, title)
     existing = list_units(conn)
     listing = "\n".join(f"{u['id']} | {u['title']} | {u['domain']}" for u in existing[:200]) or "(none)"
-    model_used = None
+    model_used, notice = None, None
     try:
         data = llm.complete_json(
             llm.INGEST_SYSTEM,
@@ -458,9 +464,12 @@ def ingest(conn: sqlite3.Connection, kind: str, ref: str, domain: str = "", titl
         model_used = llm.settings.model
         unit_title = (data.get("title") or doc.title).strip()
         unit_domain = (domain or data.get("domain") or "Unsorted").strip()
-    except Exception:  # noqa: BLE001
+    except Exception as e:  # noqa: BLE001
         data = None
         unit_title, unit_domain = (title or doc.title), (domain or "Unsorted")
+        if settings.llm_enabled:
+            log.warning("LLM ingest failed, using extract: %s: %s", type(e).__name__, e)
+            notice = f"LLM step failed ({type(e).__name__}); kept the source's first paragraph as L0."
 
     unit = create_unit(conn, unit_title, unit_domain)
     add_source(conn, unit["id"], doc.kind, doc.title, doc.url, doc.text)
@@ -480,7 +489,9 @@ def ingest(conn: sqlite3.Connection, kind: str, ref: str, domain: str = "", titl
                 )
     else:
         set_layer(conn, unit["id"], 0, sources.first_paragraph(doc.text), origin="extracted")
-    return get_unit(conn, unit["id"])
+    out = get_unit(conn, unit["id"])
+    out["notice"] = notice
+    return out
 
 
 def generate_probe(conn: sqlite3.Connection, unit_id: str) -> dict:

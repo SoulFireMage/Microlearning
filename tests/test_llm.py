@@ -111,3 +111,15 @@ def test_backend_selection(monkeypatch):
     assert settings.llm_backend == "hf"
     monkeypatch.setattr(settings, "hf_token", None)
     assert settings.llm_backend is None and not settings.llm_enabled
+
+
+def test_reasoning_kwargs(monkeypatch):
+    monkeypatch.setattr(settings, "openrouter_api_key", "sk-or")
+    monkeypatch.setattr(settings, "llm_backend_pref", "auto")
+    off = llm._reasoning_kwargs("off", 1000)
+    assert off == {"max_tokens": 1000, "extra_body": {"reasoning": {"enabled": False}}}
+    low = llm._reasoning_kwargs("low", 1000)
+    assert low["max_tokens"] == 1000 + llm.REASONING_HEADROOM and low["extra_body"]["reasoning"]["effort"] == "low"
+    monkeypatch.setattr(settings, "openrouter_api_key", None)
+    monkeypatch.setattr(settings, "hf_token", "hf")
+    assert "extra_body" not in llm._reasoning_kwargs("off", 1000)

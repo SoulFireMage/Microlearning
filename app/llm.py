@@ -183,19 +183,43 @@ def extract_json(text: str) -> dict:
     return json.loads(text[start : end + 1])
 
 
-def complete(system: str, user: str, max_tokens: int = 1500, temperature: float = 0.3) -> str:
+REASONING_HEADROOM = 4000  # reasoning tokens count against max_tokens
+
+
+def _reasoning_kwargs(effort: str, max_tokens: int) -> dict:
+    """Reasoning models (e.g. Qwen3.8) think before answering, and the
+    thinking is billed against max_tokens: with too small a budget the reply
+    is empty (finish_reason=length). Only OpenRouter exposes a uniform switch
+    for it; on HF providers we just add headroom when it may be on."""
+    if settings.llm_backend == "openrouter":
+        if effort == "off":
+            return {"max_tokens": max_tokens, "extra_body": {"reasoning": {"enabled": False}}}
+        return {"max_tokens": max_tokens + REASONING_HEADROOM, "extra_body": {"reasoning": {"effort": effort}}}
+    return {"max_tokens": max_tokens + REASONING_HEADROOM}
+
+
+def complete(system: str, user: str, max_tokens: int = 1500, temperature: float = 0.3,
+             reasoning: str = "off") -> str:
     client = _client()
     out = client.chat_completion(
         messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
         model=settings.model,
-        max_tokens=max_tokens,
         temperature=temperature,
+        **_reasoning_kwargs(reasoning, max_tokens),
     )
-    return strip_think(out.choices[0].message.content or "")
+    choice = out.choices[0]
+    text = strip_think(choice.message.content or "")
+    if not text:
+        raise RuntimeError(
+            f"Model returned no content (finish_reason={choice.finish_reason}); "
+            "if 'length', reasoning consumed the token budget."
+        )
+    return text
 
 
 def complete_json(system: str, user: str, max_tokens: int = 1500) -> dict:
-    return extract_json(complete(system, user, max_tokens=max_tokens, temperature=0.2))
+    # Structured extraction/summary: reasoning off for speed and reliability.
+    return extract_json(complete(system, user, max_tokens=max_tokens, temperature=0.2, reasoning="off"))
 
 
 def stream(system: str, user: str, max_tokens: int = 4000) -> Iterator[str]:
@@ -204,9 +228,9 @@ def stream(system: str, user: str, max_tokens: int = 4000) -> Iterator[str]:
     for chunk in client.chat_completion(
         messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
         model=settings.model,
-        max_tokens=max_tokens,
         temperature=0.4,
         stream=True,
+        **_reasoning_kwargs(settings.llm_reasoning, max_tokens),
     ):
         if not chunk.choices:
             continue
