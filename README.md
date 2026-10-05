@@ -43,7 +43,7 @@ pip install pytest && python -m pytest -q
 Live Space: https://huggingface.co/spaces/SoulFireMage/threads (private).
 
 1. **The Space holds only two files**: `space/Dockerfile` (as `Dockerfile`) and a short README card. The Dockerfile downloads a **pinned commit** of this GitHub repo at build time, so nothing binary has to be uploaded to the Space.
-2. **To deploy a new version**, push to GitHub, then change `REF` in the Space's `Dockerfile` to the new commit SHA. Each deploy is an exact, reproducible commit.
+2. **To deploy a new version**, push to GitHub, then change `REF` in the Space's `Dockerfile` to the new commit SHA. Each deploy is an exact, reproducible commit. The Space has **Dev Mode** on, so a commit alone doesn't rebuild it: follow it with a factory restart (`HfApi().restart_space(id, factory_reboot=True)`, or *Settings → Factory rebuild*).
 3. **Persistence**: HF Spaces now persist data through **Storage Buckets** mounted as volumes. Create a private bucket (`hf buckets create <you>/threads-data --private`) and attach it in *Space Settings → Storage Buckets* at mount path **`/data`**. The app detects `/data` and stores `app.db` there. Without it, data is lost on restart, and the home page will warn you.
 4. **Secrets** (*Settings → Variables and secrets*):
 
