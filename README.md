@@ -40,13 +40,10 @@ pip install pytest && python -m pytest -q
 
 ## Deploy to Hugging Face Spaces
 
-1. **Create a Space**: SDK *Docker*, visibility **Private** (simplest auth: only you can open it).
-2. **Upload this repo** to the Space (the `hf` CLI routes the binary files, fonts and screenshots, through Xet; a plain `git push` to a Space rejects binaries unless LFS is set up):
-   ```bash
-   pip install -U huggingface_hub
-   hf auth login
-   hf upload <you>/threads . . --repo-type space --exclude "tests/*" ".git/*"
-   ```
+Live Space: https://huggingface.co/spaces/SoulFireMage/threads (private).
+
+1. **The Space holds only two files**: `space/Dockerfile` (as `Dockerfile`) and a short README card. The Dockerfile downloads a **pinned commit** of this GitHub repo at build time, so nothing binary has to be uploaded to the Space.
+2. **To deploy a new version**, push to GitHub, then change `REF` in the Space's `Dockerfile` to the new commit SHA. Each deploy is an exact, reproducible commit.
 3. **Persistence**: HF Spaces now persist data through **Storage Buckets** mounted as volumes. Create a private bucket (`hf buckets create <you>/threads-data --private`) and attach it in *Space Settings → Storage Buckets* at mount path **`/data`**. The app detects `/data` and stores `app.db` there. Without it, data is lost on restart, and the home page will warn you.
 4. **Secrets** (*Settings → Variables and secrets*):
 
