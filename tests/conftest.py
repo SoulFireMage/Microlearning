@@ -9,6 +9,7 @@ from app.config import settings
 def client(tmp_path, monkeypatch):
     monkeypatch.setattr(settings, "db_path", tmp_path / "test.db")
     monkeypatch.setattr(settings, "hf_token", None)  # LLM off: exercise fallbacks
+    monkeypatch.setattr(settings, "openrouter_api_key", None)
     monkeypatch.setattr(settings, "app_password", None)
     db.clock.offset_seconds = 0
     from app.main import app

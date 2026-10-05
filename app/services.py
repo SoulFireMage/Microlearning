@@ -455,7 +455,7 @@ def ingest(conn: sqlite3.Connection, kind: str, ref: str, domain: str = "", titl
             ),
             max_tokens=2000,
         )
-        model_used = llm.settings.default_model
+        model_used = llm.settings.model
         unit_title = (data.get("title") or doc.title).strip()
         unit_domain = (domain or data.get("domain") or "Unsorted").strip()
     except Exception:  # noqa: BLE001

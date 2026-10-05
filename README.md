@@ -32,7 +32,7 @@ uvicorn app.main:app --reload --port 7860
 # open http://localhost:7860
 ```
 
-LLM features (synthesising layers, primers, recall questions, smart ingest) need `HF_TOKEN`. Without a token everything else works, and primers/ingest fall back to deterministic versions.
+LLM features (synthesising layers, primers, recall questions, smart ingest) need `HF_TOKEN` or `OPENROUTER_API_KEY`. Without a token everything else works, and primers/ingest fall back to deterministic versions.
 
 ```bash
 pip install pytest && python -m pytest -q
@@ -52,7 +52,11 @@ pip install pytest && python -m pytest -q
 
 | Name | Required | Purpose |
 |---|---|---|
-| `HF_TOKEN` | for LLM features | Token with *Inference Providers* permission |
+| `HF_TOKEN` | for LLM features (or OpenRouter below) | Token with *Inference Providers* permission |
+| `OPENROUTER_API_KEY` | alternative LLM backend | Takes precedence over `HF_TOKEN` when set. A budget-capped, expiring key is ideal |
+| `OPENROUTER_MODEL` | no | Default `qwen/qwen3.8-27b` |
+| `LLM_BACKEND` | no | `auto` (default), `hf` or `openrouter` |
+| `WIKIMEDIA_TOKEN` | no | Personal API token from api.wikimedia.org. Wikipedia throttles shared cloud IPs; authenticated requests get per-account limits |
 | `DEFAULT_MODEL` | no | Default `Qwen/Qwen3.8-27B`; any chat model served by HF Inference Providers |
 | `INFERENCE_PROVIDER` | no | Default `auto` |
 | `APP_PASSWORD` | if the Space is public | Enables a password gate |

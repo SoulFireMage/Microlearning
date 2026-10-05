@@ -98,3 +98,16 @@ def test_primer_falls_back_when_llm_raises(llm_on, monkeypatch):
     unit = client.get("/api/units/softmax").json()
     t = client.post("/api/threads", json={"title": "x", "seed_unit_id": unit["id"]}).json()
     assert client.get(f"/api/threads/{t['id']}/primer").json()["origin"] == "fallback"
+
+
+def test_backend_selection(monkeypatch):
+    monkeypatch.setattr(settings, "hf_token", "hf")
+    monkeypatch.setattr(settings, "openrouter_api_key", None)
+    monkeypatch.setattr(settings, "llm_backend_pref", "auto")
+    assert settings.llm_backend == "hf" and settings.model == settings.default_model
+    monkeypatch.setattr(settings, "openrouter_api_key", "sk-or")
+    assert settings.llm_backend == "openrouter" and settings.model == settings.openrouter_model
+    monkeypatch.setattr(settings, "llm_backend_pref", "hf")
+    assert settings.llm_backend == "hf"
+    monkeypatch.setattr(settings, "hf_token", None)
+    assert settings.llm_backend is None and not settings.llm_enabled

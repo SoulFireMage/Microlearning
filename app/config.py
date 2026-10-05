@@ -41,6 +41,17 @@ class Settings:
     llm_timeout: float = field(
         default_factory=lambda: float(os.environ.get("LLM_TIMEOUT", "90"))
     )
+    # OpenRouter (OpenAI-compatible). If its key is set it takes precedence
+    # over HF Inference Providers; LLM_BACKEND=hf|openrouter forces a choice.
+    openrouter_api_key: str | None = field(
+        default_factory=lambda: os.environ.get("OPENROUTER_API_KEY") or None
+    )
+    openrouter_model: str = field(
+        default_factory=lambda: os.environ.get("OPENROUTER_MODEL", "qwen/qwen3.8-27b")
+    )
+    llm_backend_pref: str = field(
+        default_factory=lambda: os.environ.get("LLM_BACKEND", "auto").lower()
+    )
     app_password: str | None = field(
         default_factory=lambda: os.environ.get("APP_PASSWORD") or None
     )
@@ -62,8 +73,23 @@ class Settings:
         return _default_journal_mode(self.db_path)
 
     @property
+    def llm_backend(self) -> str | None:
+        pref = self.llm_backend_pref
+        if pref == "openrouter":
+            return "openrouter" if self.openrouter_api_key else None
+        if pref == "hf":
+            return "hf" if self.hf_token else None
+        if self.openrouter_api_key:
+            return "openrouter"
+        return "hf" if self.hf_token else None
+
+    @property
     def llm_enabled(self) -> bool:
-        return bool(self.hf_token)
+        return self.llm_backend is not None
+
+    @property
+    def model(self) -> str:
+        return self.openrouter_model if self.llm_backend == "openrouter" else self.default_model
 
 
 settings = Settings()

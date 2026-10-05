@@ -14,6 +14,9 @@ RUN pip install --no-cache-dir --user -r requirements.txt
 
 COPY --chown=user app ./app
 COPY --chown=user static ./static
+COPY --chown=user scripts ./scripts
+# No-op when static/vendor is present; fills it in when an upload skipped it.
+RUN python scripts/fetch_vendor.py
 
 EXPOSE 7860
 # One worker: SQLite has a single writer, and the app keeps no other state.

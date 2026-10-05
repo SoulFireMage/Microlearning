@@ -210,7 +210,8 @@ def healthz():
 def meta():
     return {
         "llm_enabled": settings.llm_enabled,
-        "model": settings.default_model,
+        "model": settings.model,
+        "llm_backend": settings.llm_backend,
         "db_path": str(settings.db_path),
         "journal_mode": RUNTIME["journal_mode"],
         "persistent": str(settings.db_path).startswith("/data"),
@@ -406,7 +407,7 @@ def expand(unit_id: str, body: ExpandIn, conn: sqlite3.Connection = DB):
     """Stream a missing layer as plain text; saved when the stream completes."""
     u = _unit_or_404(conn, unit_id)
     if not settings.llm_enabled:
-        raise HTTPException(503, "LLM disabled: set the HF_TOKEN secret on the Space.")
+        raise HTTPException(503, "LLM disabled: set HF_TOKEN or OPENROUTER_API_KEY.")
     system, user = S.expansion_prompts(conn, u["id"], body.level, body.lens)
 
     def gen():
@@ -422,7 +423,7 @@ def expand(unit_id: str, body: ExpandIn, conn: sqlite3.Connection = DB):
         if text:
             with session() as c:
                 S.set_layer(c, u["id"], body.level, text, lens=body.lens, origin="synthesised",
-                            model=settings.default_model)
+                            model=settings.model)
 
     return StreamingResponse(gen(), media_type="text/plain; charset=utf-8",
                              headers={"X-Accel-Buffering": "no", "Cache-Control": "no-cache"})

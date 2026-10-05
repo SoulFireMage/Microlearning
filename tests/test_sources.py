@@ -68,3 +68,24 @@ def test_html_extraction(monkeypatch):
     d = sources.fetch_url("https://example.org/post")
     assert d.title == "A Post"
     assert "Real content here." in d.text and "menu" not in d.text and "var x" not in d.text
+
+
+def test_rate_limit_message(monkeypatch):
+    import httpx
+    class R:
+        status_code, text = 429, "You are making too many requests to the API."
+    monkeypatch.setattr(httpx, "get", lambda *a, **k: R())
+    with pytest.raises(sources.SourceError, match="WIKIMEDIA_TOKEN"):
+        sources.fetch_wikipedia("Softmax")
+
+
+def test_arxiv_hook_is_abstract(monkeypatch):
+    monkeypatch.setattr(sources, "_get", lambda url, **p: FakeResp(text=ATOM, ctype="application/atom+xml"))
+    d = sources.fetch("arxiv", "1706.03762")
+    assert sources.first_paragraph(d.text).startswith("The dominant sequence")
+
+
+def test_svg_titles_ignored(monkeypatch):
+    html = "<html><head><title>Real Title</title></head><body><svg><title>rnn</title></svg><p>x</p></body></html>"
+    monkeypatch.setattr(sources, "_get", lambda url, **p: FakeResp(text=html, ctype="text/html"))
+    assert sources.fetch_url("https://example.org/a").title == "Real Title"

@@ -110,10 +110,18 @@ class LLMUnavailable(RuntimeError):
 
 
 def _client():
-    if not settings.llm_enabled:
-        raise LLMUnavailable("HF_TOKEN is not set; LLM features are disabled.")
+    backend = settings.llm_backend
+    if backend is None:
+        raise LLMUnavailable("No LLM key set (HF_TOKEN or OPENROUTER_API_KEY); LLM features are disabled.")
     from huggingface_hub import InferenceClient
 
+    if backend == "openrouter":
+        return InferenceClient(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=settings.openrouter_api_key,
+            timeout=settings.llm_timeout,
+            headers={"X-Title": "threads/ microlearning"},
+        )
     return InferenceClient(
         provider=settings.inference_provider,
         token=settings.hf_token,
@@ -179,7 +187,7 @@ def complete(system: str, user: str, max_tokens: int = 1500, temperature: float 
     client = _client()
     out = client.chat_completion(
         messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
-        model=settings.default_model,
+        model=settings.model,
         max_tokens=max_tokens,
         temperature=temperature,
     )
@@ -195,7 +203,7 @@ def stream(system: str, user: str, max_tokens: int = 4000) -> Iterator[str]:
     filt = ThinkFilter()
     for chunk in client.chat_completion(
         messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
-        model=settings.default_model,
+        model=settings.model,
         max_tokens=max_tokens,
         temperature=0.4,
         stream=True,

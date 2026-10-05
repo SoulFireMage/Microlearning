@@ -7,6 +7,7 @@ the model's memory.
 """
 from __future__ import annotations
 
+import os
 import re
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
@@ -15,7 +16,15 @@ from urllib.parse import quote, unquote, urlparse
 
 import httpx
 
-USER_AGENT = "ThreadResilientEngine/0.1 (personal learning tool; huggingface.co Space)"
+# Wikimedia requires a User-Agent with contact info; unidentified clients
+# are capped at ~10 req/min per IP (shared cloud IPs hit that instantly).
+USER_AGENT = os.environ.get(
+    "SOURCES_USER_AGENT",
+    "ThreadsLearning/0.2 (https://github.com/SoulFireMage/Microlearning; personal learning tool)",
+)
+# Optional Wikimedia personal API token (api.wikimedia.org): authenticated
+# requests get per-account rate limits instead of per-IP ones.
+WIKIMEDIA_TOKEN = os.environ.get("WIKIMEDIA_TOKEN")
 MAX_CHARS = 12000
 
 
@@ -31,15 +40,21 @@ class SourceError(RuntimeError):
     pass
 
 
-def _get(url: str, **params) -> httpx.Response:
+def _get(url: str, headers: dict | None = None, **params) -> httpx.Response:
     try:
         r = httpx.get(
             url,
             params=params or None,
-            headers={"User-Agent": USER_AGENT},
+            headers={"User-Agent": USER_AGENT, **(headers or {})},
             timeout=20,
             follow_redirects=True,
         )
+        body = r.text.lower() if r.status_code in (403, 429) else ""
+        if "too many requests" in body or "wikimedia" in body:  # throttle / robot-policy block
+            raise SourceError(
+                f"{urlparse(url).netloc} is rate-limiting this server's IP. Set a WIKIMEDIA_TOKEN "
+                "(personal API token from api.wikimedia.org) for per-account limits, or paste the text instead."
+            )
         r.raise_for_status()
         return r
     except httpx.HTTPError as e:
@@ -51,8 +66,10 @@ def fetch_wikipedia(ref: str) -> SourceDoc:
     if ref.startswith("http"):
         title = unquote(urlparse(ref).path.rsplit("/", 1)[-1])
     title = title.replace("_", " ").strip()
+    auth = {"Authorization": f"Bearer {WIKIMEDIA_TOKEN}"} if WIKIMEDIA_TOKEN else None
     data = _get(
         "https://en.wikipedia.org/w/api.php",
+        headers=auth,
         action="query",
         prop="extracts|info",
         explaintext=1,
@@ -86,7 +103,7 @@ def fetch_arxiv(ref: str) -> SourceDoc:
     title = " ".join(entry.findtext("a:title", "", ns).split())
     summary = " ".join(entry.findtext("a:summary", "", ns).split())
     authors = ", ".join(a.findtext("a:name", "", ns) for a in entry.findall("a:author", ns))
-    text = f"{title}\nAuthors: {authors}\n\nAbstract: {summary}"
+    text = f"{title}\n\n{summary}\n\nAuthors: {authors}"
     return SourceDoc("arxiv", title, f"https://arxiv.org/abs/{aid}", text[:MAX_CHARS])
 
 
@@ -103,7 +120,7 @@ class _TextExtractor(HTMLParser):
     def handle_starttag(self, tag, attrs):
         if tag in self.SKIP:
             self.depth_skip += 1
-        if tag == "title":
+        if tag == "title" and not self.depth_skip and not self.title:
             self._in_title = True
         if tag in {"p", "br", "li", "h1", "h2", "h3", "h4", "tr", "div"}:
             self.parts.append("\n")
