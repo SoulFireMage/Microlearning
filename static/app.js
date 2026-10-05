@@ -456,7 +456,7 @@ function renderContent() {
 async function synthesize(level, lens) {
   const box = $("#content");
   const unitId = app.unit.id;
-  box.innerHTML = "";
+  box.innerHTML = `<p class="rel-none">Model is thinking before it writes (reasoning models can take 30–60 s)…</p>`;
   box.classList.add("streaming");
   let text = "", last = 0;
   try {
