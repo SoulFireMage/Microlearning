@@ -19,7 +19,7 @@ ENV HOME=/home/user \
 WORKDIR /app
 
 ARG REPO=SoulFireMage/Microlearning
-ARG REF=782ed9619d38df454eaf8152920f9319f3ac2fc5
+ARG REF=82943924d6b5bf8b017d852db13c139c4192700b
 RUN curl -fsSL "https://codeload.github.com/${REPO}/tar.gz/${REF}" | tar xz --strip-components=1 \
  && pip install --no-cache-dir --user -r requirements.txt \
  && python scripts/fetch_vendor.py \
