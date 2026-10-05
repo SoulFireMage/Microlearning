@@ -1,20 +1,26 @@
 # Hugging Face Space build: fetches a pinned commit of the GitHub repo, so the
 # Space itself only holds this file and README.md. To deploy a new version,
 # change REF to the new commit SHA.
+#
+# Dev Mode compatible (HF Pro): bash/curl/wget/procps/git/git-lfs present,
+# code in /app owned by uid 1000, CMD defined.
 FROM python:3.11-slim
 
-RUN useradd -m -u 1000 user
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends bash curl wget procps git git-lfs \
+ && rm -rf /var/lib/apt/lists/* \
+ && useradd -m -u 1000 user \
+ && mkdir /app && chown user:user /app
 USER user
 ENV HOME=/home/user \
     PATH=/home/user/.local/bin:$PATH \
     PYTHONUNBUFFERED=1 \
     PORT=7860
-WORKDIR $HOME/app
+WORKDIR /app
 
 ARG REPO=SoulFireMage/Microlearning
-ARG REF=97bf85e14b23a40137b000f837faa715771a41cc
-RUN python -c "import sys, urllib.request; sys.stdout.buffer.write(urllib.request.urlopen('https://codeload.github.com/${REPO}/tar.gz/${REF}', timeout=120).read())" \
-    | tar xz --strip-components=1 \
+ARG REF=782ed9619d38df454eaf8152920f9319f3ac2fc5
+RUN curl -fsSL "https://codeload.github.com/${REPO}/tar.gz/${REF}" | tar xz --strip-components=1 \
  && pip install --no-cache-dir --user -r requirements.txt \
  && python scripts/fetch_vendor.py \
  && rm -rf tests docs space

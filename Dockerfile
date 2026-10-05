@@ -1,13 +1,18 @@
 FROM python:3.11-slim
 
-# HF Spaces run containers as uid 1000.
-RUN useradd -m -u 1000 user
+# HF Spaces run containers as uid 1000. The extra packages and /app layout
+# keep HF Dev Mode working (it needs bash/curl/wget/procps/git/git-lfs).
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends bash curl wget procps git git-lfs \
+ && rm -rf /var/lib/apt/lists/* \
+ && useradd -m -u 1000 user \
+ && mkdir /app && chown user:user /app
 USER user
 ENV HOME=/home/user \
     PATH=/home/user/.local/bin:$PATH \
     PYTHONUNBUFFERED=1 \
     PORT=7860
-WORKDIR $HOME/app
+WORKDIR /app
 
 COPY --chown=user requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
