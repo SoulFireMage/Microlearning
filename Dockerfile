@@ -25,4 +25,7 @@ RUN python scripts/fetch_vendor.py
 
 EXPOSE 7860
 # One worker: SQLite has a single writer, and the app keeps no other state.
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT} --proxy-headers --forwarded-allow-ips '*'"]
+# `exec` makes uvicorn the CMD process itself, so a stop signal reaches it.
+# Without it, Dev Mode's restarts orphan the old server, which keeps port
+# 7860 and makes every restart fail with "address already in use".
+CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT} --proxy-headers --forwarded-allow-ips '*'"]

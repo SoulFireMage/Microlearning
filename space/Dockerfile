@@ -26,4 +26,7 @@ RUN curl -fsSL "https://codeload.github.com/${REPO}/tar.gz/${REF}" | tar xz --st
  && rm -rf tests docs space
 
 EXPOSE 7860
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT} --proxy-headers --forwarded-allow-ips '*'"]
+# `exec` makes uvicorn the CMD process itself, so a stop signal reaches it.
+# Without it, Dev Mode's restarts orphan the old server, which keeps port
+# 7860 and makes every restart fail with "address already in use".
+CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT} --proxy-headers --forwarded-allow-ips '*'"]
